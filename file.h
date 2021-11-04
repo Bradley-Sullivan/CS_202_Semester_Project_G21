@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 
-#define MAX_NORM_16 65535
-#define MAX_NORM_8 255
-
 typedef struct WAV_HEADER{
     //RIFF Chunk
     uint8_t riffID[4];
@@ -36,6 +33,7 @@ class WavFile {
     public:
         int16_t* getSampleData() const;
         WAV_HEADER getWavHeader() const;
+        double getAudioDuration() const;
 
         int loadWavData(std::string filename);
         void saveFile(std::string);

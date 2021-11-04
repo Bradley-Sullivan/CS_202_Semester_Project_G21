@@ -11,7 +11,7 @@ class Effects {
     public:
         Effects(int16_t* rawData, uint32_t size, int bitDepth, int samplesPerSecond):rawData{rawData},size{size},bitDepth{bitDepth},samplesPerSecond{samplesPerSecond}{};
         Effects() = default;
-        void echo();
+        void echo(double);
         void normalize();
         void gainAdjustment(double);
 

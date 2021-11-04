@@ -43,6 +43,7 @@ void UI::printWavMetadata() {
     std::cout << "Number of Channels    : " << header.numChannels;
     if (header.numChannels == 2) std::cout << " (Stereo)" << std::endl;
     else if (header.numChannels == 1) std::cout << " (Mono)" << std::endl;
+    std::cout << "Audio Duration        : " << audioFile.getAudioDuration() << " seconds" << std::endl;
     std::cout << "=============================================\n\n" << std::endl;
 }
 
@@ -74,7 +75,7 @@ void UI::processorMenu() {
             addEffect.normalize();
             break;
         case '2':
-            addEffect.echo();
+            addEffect.echo(audioFile.getAudioDuration());
             break;
         case '3':
             double gainFactor;

@@ -4,6 +4,8 @@ int16_t* WavFile::getSampleData() const { return sampleData; }
 
 WAV_HEADER WavFile::getWavHeader() const { return wavHeader; }
 
+double WavFile::getAudioDuration() const { return (double) (wavHeader.dataBodySize / ((wavHeader.samplesPerSecond * wavHeader.bitsPerSample * wavHeader.numChannels) / 8)); }
+
 //Need to position file pointer to the beginning of the sample data within the data chunk
 //Otherwise, if the wav file isn't exactly in the form that we want we just read in garbage data
 int WavFile::loadWavData(std::string filename) {

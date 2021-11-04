@@ -1,14 +1,17 @@
 #include "effects.h"
 
-void Effects::echo() {
-    double delay = 0.5;
-    uint32_t offset = delay * samplesPerSecond;
-    int16_t buffer[size];
-    for (uint32_t i = 0; i < size; i++) {
-        buffer[i] = rawData[i];
-        if (i > offset) {
-            rawData[i] += (int16_t) (buffer[i - offset] * 0.5);
+void Effects::echo(double audioDuration) {
+    double echoDelaySeconds, echoDecay = 0.5;
+    do {
+        std::cout << "\nPlease enter echo delay in seconds.\n> ";
+        std::cin >> echoDelaySeconds;
+        if (echoDelaySeconds >= audioDuration) {
+            std::cout << "Invalid delay. Echo delay must be less than the audio file's duration\n\tAudio Duration: " << audioDuration << " seconds" << std::endl;
         }
+    } while(echoDelaySeconds >= audioDuration);
+    int delayOffset = (int) (echoDelaySeconds * samplesPerSecond);
+    for (uint32_t i = 0; i < size - delayOffset; i++) {
+        if (i + delayOffset < size) rawData[i + delayOffset] += (int16_t) (rawData[i] * echoDecay);
     }
 }
 
