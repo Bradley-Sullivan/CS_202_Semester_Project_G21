@@ -1,6 +1,7 @@
 #ifndef EFFECTS_H
 #define EFFECTS_H
 #include <iostream>
+#include <math.h>
 
 
 class Effects {

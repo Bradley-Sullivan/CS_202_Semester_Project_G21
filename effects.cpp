@@ -16,15 +16,13 @@ void Effects::echo(double audioDuration) {
 }
 
 void Effects::normalize() {
-    double max, normalizationFactor;
-    gainAdjustment(0.5);
+    double max, normFactor;
     convertRawData();
+    for (uint32_t i = 0; i < size; i++) if (convertedSamples[i] > max) max = convertedSamples[i];
+    normFactor = 0.5 / max;
     for (uint32_t i = 0; i < size; i++) {
-        if (convertedSamples[i] > max) max = convertedSamples[i];
-    }
-    normalizationFactor = 1 / max;
-    for (uint32_t i = 0; i < size; i++) {
-        rawData[i] += (int16_t) (rawData[i] * normalizationFactor);
+        convertedSamples[i] *= normFactor;
+        rawData[i] = (int16_t) (convertedSamples[i] * pow(2, bitDepth) - 1);
     }
     delete convertedSamples;
 }
@@ -47,7 +45,6 @@ void Effects::convertRawData() {
     convertedSamples = new double[size];
     for (uint32_t i = 0; i < size; i++) {
         convertedSamples[i] = rawData[i];
-        if (bitDepth == 8) convertedSamples[i] /= 255;
-        else if (bitDepth == 16) convertedSamples[i] /= 65535;
+        convertedSamples[i] /= (pow(2, bitDepth) - 1);
     }  
 }
