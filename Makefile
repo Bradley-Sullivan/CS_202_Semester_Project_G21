@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -g -Wall
 
-all: wav
+all: wav 
 
 wav: main.o file.o ui.o effects.o
 	$(CC) $(CFLAGS) -o wav main.o file.o ui.o effects.o
