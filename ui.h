@@ -7,16 +7,13 @@
 #include "effects.h"
 
 class UI {
-    WavFile audioFile;
     WAV_HEADER header;
-    std::string filename;
-    std::string outputFilename;
     public:
         int startMenu();
-        void requestFilename();
-        void printWavMetadata();
-        void processorMenu();
-        void requestOutputFilename();
+        std::string requestFilename();
+        void printWavMetadata(std::string, WAV_HEADER);
+        int processorMenu();
+        std::string requestOutputFilename();
         void requestGainFactor();
         void requestEchoDelay();
 };

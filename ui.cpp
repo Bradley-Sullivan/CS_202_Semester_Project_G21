@@ -6,51 +6,47 @@ int UI::startMenu() {
     std::cout << "=          WAV FILE EFFECT-ER 3000        =" << std::endl;
     std::cout << "===========================================" << std::endl;
     std::cout << "\n   (1) Open a file to modify\n   (2) Exit\n" << std::endl;
-    std::cout << "> ";
-    std::cin >> selection;
+    do {
+        std::cout << "> ";
+        std::cin >> selection;
+        if (selection != 1 && selection != 2) std::cout << "\nInvalid input. Try again." << std::endl;
+    } while (selection != 1 && selection != 2);
     switch (selection) {
         case 1:
-            do {
-                requestFilename();
-            } while (audioFile.loadWavData(filename) == -1);
-            printWavMetadata();
-            processorMenu();
+            return 1;
             break;
         case 2:
             std::cout << "\nGoodbye...\n" << std::endl;
-            return -1;
+            return 2;
             break;
-        default:
-            std::cout << "\nInvalid input. Try again.\n" << std::endl;
-            break;
+        default: return 2;
     }
-    return 0;
 }
 
-void UI::requestFilename() {
+std::string UI::requestFilename() {
+    std::string filename;
     std::cout << "Please enter the name of your audio file (ex. audioFile.wav)" << std::endl;
     std::cout << "> ";
     std::cin >> filename;
+    return filename;
 }
 
-void UI::printWavMetadata() {
-    header = audioFile.getWavHeader();
-    std::cout << "\n\n=============================================" << std::endl;
+void UI::printWavMetadata(std::string filename, WAV_HEADER wavHeader) {
+    std::cout << "\n=============================================" << std::endl;
     std::cout << "                   METADATA" << std::endl;
     std::cout << "Filename              : " << filename << std::endl;
-    std::cout << "Samples per Second    : " << header.samplesPerSecond << std::endl;
-    std::cout << "Bits per Sample       : " << header.bitsPerSample << std::endl;
-    std::cout << "Number of Channels    : " << header.numChannels;
-    if (header.numChannels == 2) std::cout << " (Stereo)" << std::endl;
-    else if (header.numChannels == 1) std::cout << " (Mono)" << std::endl;
-    std::cout << "Audio Duration        : " << audioFile.getAudioDuration() << " seconds" << std::endl;
-    std::cout << "=============================================\n\n" << std::endl;
+    std::cout << "Samples per Second    : " << wavHeader.samplesPerSecond << std::endl;
+    std::cout << "Bits per Sample       : " << wavHeader.bitsPerSample << std::endl;
+    std::cout << "Number of Channels    : " << wavHeader.numChannels;
+    if (wavHeader.numChannels == 2) std::cout << " (Stereo)" << std::endl;
+    else if (wavHeader.numChannels == 1) std::cout << " (Mono)" << std::endl;
+    std::cout << "Audio Duration        : " << wavHeader.dataBodySize / ((wavHeader.samplesPerSecond * wavHeader.bitsPerSample * wavHeader.numChannels) / 8) << " seconds" << std::endl;
+    std::cout << "=============================================" << std::endl;
 }
 
-void UI::processorMenu() {
+int UI::processorMenu() {
     char selection;
     bool help = false;
-    Effects addEffect(audioFile.getSampleData(), header.dataBodySize, header.bitsPerSample, header.samplesPerSecond);
     do {
         if (help) {
             std::cout << "Available Effects" << std::endl;
@@ -72,30 +68,20 @@ void UI::processorMenu() {
     } while(selection != '1' && selection != '2' && selection != '3');
     switch (selection) {
         case '1':
-            addEffect.normalize();
-            break;
+            return 1;
         case '2':
-            addEffect.echo(audioFile.getAudioDuration());
-            break;
+            return 2;
         case '3':
-            double gainFactor;
-            do {
-                std::cout << "Please enter your gain adjustment factor (between 0 and 3)\n> ";
-                std::cin >> gainFactor;
-                if (gainFactor < 0 || gainFactor > 3) std::cout << "Invalid factor entered. Try again\n" << std::endl;
-            } while (gainFactor < 0 || gainFactor > 3);
-            addEffect.gainAdjustment(gainFactor);
-            break;
-        default:
-            std::cout << "you weren't supposed to get here...." << std::endl;
-            break;
+            return 3;
+        default: break;
     }
-    requestOutputFilename();
+    return -1;
 }
 
-void UI::requestOutputFilename() {
+std::string UI::requestOutputFilename() {
+    std::string filename;
     std::cout << "Please enter the name of the output file (ex. outpuFile.wav)" << std::endl;
     std::cout << "> ";
-    std::cin >> outputFilename;
-    audioFile.saveFile(outputFilename);
+    std::cin >> filename;
+    return filename;
 }

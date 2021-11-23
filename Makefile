@@ -3,8 +3,8 @@ CFLAGS = -g -Wall
 
 all: wav 
 
-wav: main.o file.o ui.o effects.o
-	$(CC) $(CFLAGS) -o wav main.o file.o ui.o effects.o
+wav: main.o file.o effects.o ui.o
+	$(CC) $(CFLAGS) -o wav main.o file.o effects.o ui.o
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) -c main.cpp

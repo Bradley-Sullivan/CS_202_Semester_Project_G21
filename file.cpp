@@ -1,12 +1,14 @@
 #include "file.h"
 
-int16_t* WavFile::getSampleData() const { return sampleData; }
-
 WAV_HEADER WavFile::getWavHeader() const { return wavHeader; }
+
+float* WavFile::getSampleData() const { return sampleData; }
 
 double WavFile::getAudioDuration() const { return (double) (wavHeader.dataBodySize / ((wavHeader.samplesPerSecond * wavHeader.bitsPerSample * wavHeader.numChannels) / 8)); }
 
-int WavFile::loadWavData(std::string filename) {
+uint32_t WavFile::getDataChunkPos() const { return dataChunkPos; }
+
+int WavFile::loadWavHeader(std::string filename) {
     uint8_t chunkID[4];
     uint32_t chunkSize;
 
@@ -60,32 +62,61 @@ int WavFile::loadWavData(std::string filename) {
         for (int i = 0; i < 4; i++) wavHeader.dataID[i] = chunkID[i];
         wavHeader.dataBodySize = chunkSize;
 
-        //Points the sampleData pointer to an array allocated on the heap as we don't want to overflow the stack if the wav file is too large
-        sampleData = new int16_t[wavHeader.dataBodySize];
+        dataChunkPos = wavFile.tellg();
 
-        //Reads in the sample data into the buffer
-        wavFile.read((char*)sampleData, wavHeader.dataBodySize);
         wavFile.close();
     }
     else {
         std::cout << "Unable to open " << filename << " . File does not exist or is unreadable\n" << std::endl;
         return -1;
     }
-    std::cout << "\nFile loaded successfully.\n" << std::endl;
     return 0;
 }
 
-void WavFile::saveFile(std::string outputFilename) {
-    std::fstream outFile;
-    outFile.open(outputFilename, std::ios::out | std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write((char*)&wavHeader, sizeof(wavHeader));
-        outFile.write((char*)sampleData, wavHeader.dataBodySize);
-        outFile.close();
-        std::cout << "\nFile save successfully";
-        delete sampleData; 
+void WavFile::loadSampleData(std::string filename) {
+    std::ifstream data (filename, std::ios::binary | std::ios::in);
+    data.seekg(dataChunkPos);
+    if (wavHeader.bitsPerSample == 8) {
+        int8_t* buffer;
+        buffer = new int8_t[wavHeader.dataBodySize];
+        data.read((char*)buffer, wavHeader.dataBodySize);
+        data.close();
+        sampleData = new float[wavHeader.dataBodySize];
+        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = ((float) buffer[i]) / (pow(2, wavHeader.bitsPerSample - 1) - 1);
+    }
+    else if (wavHeader.bitsPerSample == 16) {
+        int16_t* buffer;
+        buffer = new int16_t[wavHeader.dataBodySize];
+        data.read((char*)buffer, wavHeader.dataBodySize);
+        data.close();
+        sampleData = new float[wavHeader.dataBodySize];
+        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = ((float) buffer[i]) / (pow(2, wavHeader.bitsPerSample - 1) - 1);
+    }    
+}
+
+void WavFile::writeSampleData(std::string outputFilename) {
+    std::fstream out (outputFilename, std::ios::binary | std::ios::out);
+    if (out.is_open()) {
+        if (wavHeader.bitsPerSample == 8) {
+            int8_t* buffer;
+            buffer = new int8_t[wavHeader.dataBodySize];
+            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) buffer[i] = (int8_t) (sampleData[i] * pow(2, wavHeader.bitsPerSample - 1) - 1);
+            out.write((char*)&wavHeader, sizeof(wavHeader));
+            out.write((char*)buffer, wavHeader.dataBodySize);
+            out.close();
+            std::cout << "\nFile saved successfully\n";
+        }
+        else if (wavHeader.bitsPerSample == 16) {
+            int16_t* buffer;
+            buffer = new int16_t[wavHeader.dataBodySize];
+            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) buffer[i] = (int16_t) (sampleData[i] * pow(2, wavHeader.bitsPerSample - 1) - 1);
+            out.write((char*)&wavHeader, sizeof(wavHeader));
+            out.write((char*)buffer, wavHeader.dataBodySize);
+            out.close();
+            std::cout << "\nFile saved successfully\n";
+        }
     }
     else {
-        std::cout << "\nError opening output file to save sample data. Could not save changes.\n" << std::endl;
+        std::cout << "\nError opening output file to save sample data. Could not write changes.\n" << std::endl;
     }
 }

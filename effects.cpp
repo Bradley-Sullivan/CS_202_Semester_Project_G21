@@ -1,7 +1,7 @@
 #include "effects.h"
 
 void Effects::echo(double audioDuration) {
-    double echoDelaySeconds, echoDecay = 0.5;
+    float echoDelaySeconds, echoDecay = 0.5;
     do {
         std::cout << "\nPlease enter echo delay in seconds.\n> ";
         std::cin >> echoDelaySeconds;
@@ -9,42 +9,33 @@ void Effects::echo(double audioDuration) {
             std::cout << "Invalid delay. Echo delay must be less than the audio file's duration\n\tAudio Duration: " << audioDuration << " seconds" << std::endl;
         }
     } while(echoDelaySeconds >= audioDuration);
-    int delayOffset = (int) (echoDelaySeconds * samplesPerSecond);
-    for (uint32_t i = 0; i < size - delayOffset; i++) {
-        if (i + delayOffset < size) rawData[i + delayOffset] += (int16_t) (rawData[i] * echoDecay);
+    int delayOffset = echoDelaySeconds * wavHeader.samplesPerSecond;
+    for (uint32_t i = 0; i < wavHeader.dataBodySize - delayOffset; i++) {
+        if (i + delayOffset < wavHeader.dataBodySize) rawData[i + delayOffset] += rawData[i] * echoDecay;
     }
 }
 
 void Effects::normalize() {
-    double max, normFactor;
-    convertRawData();
-    for (uint32_t i = 0; i < size; i++) if (convertedSamples[i] > max) max = convertedSamples[i];
-    normFactor = 0.5 / max;
-    for (uint32_t i = 0; i < size; i++) {
-        convertedSamples[i] *= normFactor;
-        rawData[i] = (int16_t) (convertedSamples[i] * pow(2, bitDepth) - 1);
-    }
-    delete convertedSamples;
-}
-
-void Effects::gainAdjustment(double gainFactor) {
-    if (gainFactor < 1) {
-        gainFactor = 1 - gainFactor;
-        for (uint32_t i = 0; i < size; i++) {
-            rawData[i] -= (int16_t) (rawData[i] * gainFactor);
+    double max = 0, normFactor;
+    uint32_t maxLocation;
+    // rawData[x] is signed and need to find the index of rawData with the greatest absolute value
+    for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) {
+        if (abs(rawData[i]) > max) {
+            max = abs(rawData[i]);
+            maxLocation = i;
         }
     }
-    else {
-        for (uint32_t i = 0; i < size; i++) {
-            rawData[i] += (int16_t) (rawData[i] * gainFactor);
-        }
-    }    
+    normFactor = 1 / rawData[maxLocation];
+    for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) rawData[i] *= normFactor;
 }
 
-void Effects::convertRawData() {
-    convertedSamples = new double[size];
-    for (uint32_t i = 0; i < size; i++) {
-        convertedSamples[i] = rawData[i];
-        convertedSamples[i] /= (pow(2, bitDepth) - 1);
-    }  
+void Effects::gainAdjustment() {
+    float gainFactor;
+    do {
+        std::cout << "\nPlease enter your desired gain adjustment factor (i.e. a value betwen 0 & 10)" << std::endl;
+        std::cout << "> ";
+        std::cin >> gainFactor;
+        if (gainFactor < 0 || gainFactor > 10) std::cout << "\nInvalid value entered. Try again" << std::endl;
+    } while(gainFactor < 0 || gainFactor > 10);
+    for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) rawData[i] *= gainFactor;
 }

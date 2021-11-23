@@ -10,7 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <math.h>
 
 typedef struct WAV_HEADER{
     //RIFF Chunk
@@ -34,41 +34,17 @@ typedef struct WAV_HEADER{
 
 class WavFile {
     WAV_HEADER wavHeader;
-    int16_t* sampleData;
+    uint32_t dataChunkPos;
+    float* sampleData;
 
-    public:
-        /**
-         * @brief Returns a copy of the sampleData pointer
-         * 
-         * @return int16_t*
-         */
-        int16_t* getSampleData() const;
-        /**
-         * @brief Returns a copy of the WAV_HEADER struct
-         * 
-         * @return WAV_HEADER 
-         */
+    public:        
         WAV_HEADER getWavHeader() const;
-        /**
-         * @brief Calculates and returns the duration of the audio file
-         * 
-         * @return double 
-         */
+        float* getSampleData() const;   
         double getAudioDuration() const;
-
-        /**
-         * @brief Loads the file data into an int16_t buffer
-         * 
-         * @param filename - Name of the .wav file
-         * @return int - Returns 0 if the file is correctly formatted and loaded. Returns -1 if not.
-         */
-        int loadWavData(std::string filename);
-        /**
-         * @brief Saves modified sample data into an existing file. If an existing file doesn't exist, it creates one.
-         * 
-         * @param outputFilename - Name of the file to be written to disk
-         */
-        void saveFile(std::string outputFilename);
+        uint32_t getDataChunkPos() const;
+        int loadWavHeader(std::string);
+        void loadSampleData(std::string);
+        void writeSampleData(std::string);
 };
 
 #endif //FILE_H

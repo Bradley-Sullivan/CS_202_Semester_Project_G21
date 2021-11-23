@@ -2,21 +2,18 @@
 #define EFFECTS_H
 #include <iostream>
 #include <math.h>
-
+#include "file.h"
 
 class Effects {
-    int16_t* rawData;
-    uint32_t size;
-    int bitDepth, samplesPerSecond;
-    double* convertedSamples;
+    float* rawData;
+    WAV_HEADER wavHeader;
+    
     public:
-        Effects(int16_t* rawData, uint32_t size, int bitDepth, int samplesPerSecond):rawData{rawData},size{size},bitDepth{bitDepth},samplesPerSecond{samplesPerSecond}{};
+        Effects(float* rawData, WAV_HEADER header):rawData{rawData},wavHeader{header}{};
         Effects() = default;
         void echo(double);
         void normalize();
-        void gainAdjustment(double);
-
-        void convertRawData();
+        void gainAdjustment();
 };
 
 #endif //EFFECTS_H
