@@ -2,7 +2,7 @@
 
 WAV_HEADER WavFile::getWavHeader() const { return wavHeader; }
 
-float* WavFile::getSampleData() const { return sampleData; }
+double* WavFile::getSampleData() const { return sampleData; }
 
 double WavFile::getAudioDuration() const { return (double) (wavHeader.dataBodySize / ((wavHeader.samplesPerSecond * wavHeader.bitsPerSample * wavHeader.numChannels) / 8)); }
 
@@ -74,33 +74,53 @@ int WavFile::loadWavHeader(std::string filename) {
 }
 
 void WavFile::loadSampleData(std::string filename) {
-    std::ifstream data (filename, std::ios::binary | std::ios::in);
+    std::fstream data (filename, std::ios::binary | std::ios::in);
     data.seekg(dataChunkPos);
     if (wavHeader.bitsPerSample == 8) {
-        int8_t* buffer;
-        buffer = new int8_t[wavHeader.dataBodySize];
+        uint8_t* buffer;
+        buffer = new uint8_t[wavHeader.dataBodySize];
         data.read((char*)buffer, wavHeader.dataBodySize);
         data.close();
-        sampleData = new float[wavHeader.dataBodySize];
-        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = ((float) buffer[i]) / (pow(2, wavHeader.bitsPerSample - 1) - 1);
+        sampleData = new double[wavHeader.dataBodySize];
+/*
+    8-bit wav files are always unsigned which means that every value will lies in the range [0,255], NOT
+    in [-127,127]. Because we want to center the float values from [-1, 1], we need to subtract 127 from
+    every value fixing the range from [0,255] -> [-127,127] and then dividing each value by 127 we then
+    transform the range to [-1,1] which is what we want.
+*/
+        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = (double) (buffer[i] - (INT8_MAX)) / (INT8_MAX);
     }
     else if (wavHeader.bitsPerSample == 16) {
         int16_t* buffer;
         buffer = new int16_t[wavHeader.dataBodySize];
         data.read((char*)buffer, wavHeader.dataBodySize);
         data.close();
-        sampleData = new float[wavHeader.dataBodySize];
-        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = ((float) buffer[i]) / (pow(2, wavHeader.bitsPerSample - 1) - 1);
+        sampleData = new double[wavHeader.dataBodySize];
+        for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) sampleData[i] = (double) buffer[i] / INT16_MAX;
     }    
 }
 
 void WavFile::writeSampleData(std::string outputFilename) {
-    std::fstream out (outputFilename, std::ios::binary | std::ios::out);
+    std::ofstream out (outputFilename, std::ofstream::binary);
     if (out.is_open()) {
         if (wavHeader.bitsPerSample == 8) {
-            int8_t* buffer;
-            buffer = new int8_t[wavHeader.dataBodySize];
-            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) buffer[i] = (int8_t) (sampleData[i] * pow(2, wavHeader.bitsPerSample - 1) - 1);
+            uint8_t* buffer;
+            buffer = new uint8_t[wavHeader.dataBodySize];
+/*
+    Since our values are in the range of [-1,1] and we need them in the range of [0,255] we first
+    make sure that after effects are applied, our sample data is clamped between -1 and 1. Then, we
+    would like the range to be from [0,1] so that when we scale each sample value by 255 we are
+    left with the sample range of [0,255] which is exactly how we read in the data. So we add one
+    to every sample so that we go from a range of [-1,1] -> [0,2] and then we divide by two taking
+    it to [0,1] and scale by 255 and voila. I spent wayyyyyy too long figuring this out and it's
+    not really that complex. :{
+*/
+            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) {
+                sampleData[i] = clamp(sampleData[i], -1, 1);
+                sampleData[i] = (sampleData[i] + 1) / 2;
+                sampleData[i] *= 255;
+                buffer[i] = sampleData[i];
+            }
             out.write((char*)&wavHeader, sizeof(wavHeader));
             out.write((char*)buffer, wavHeader.dataBodySize);
             out.close();
@@ -109,7 +129,7 @@ void WavFile::writeSampleData(std::string outputFilename) {
         else if (wavHeader.bitsPerSample == 16) {
             int16_t* buffer;
             buffer = new int16_t[wavHeader.dataBodySize];
-            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) buffer[i] = (int16_t) (sampleData[i] * pow(2, wavHeader.bitsPerSample - 1) - 1);
+            for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) buffer[i] = (int16_t) (sampleData[i] * INT16_MAX);
             out.write((char*)&wavHeader, sizeof(wavHeader));
             out.write((char*)buffer, wavHeader.dataBodySize);
             out.close();
@@ -119,4 +139,10 @@ void WavFile::writeSampleData(std::string outputFilename) {
     else {
         std::cout << "\nError opening output file to save sample data. Could not write changes.\n" << std::endl;
     }
+}
+
+double WavFile::clamp(double value, double min, double max) {
+    value = std::min(value, max);
+    value = std::max(value, min);
+    return value;
 }

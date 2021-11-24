@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include <math.h>
+#include <cstdint>
 
 typedef struct WAV_HEADER{
     //RIFF Chunk
@@ -35,16 +36,17 @@ typedef struct WAV_HEADER{
 class WavFile {
     WAV_HEADER wavHeader;
     uint32_t dataChunkPos;
-    float* sampleData;
+    double* sampleData;
 
     public:        
         WAV_HEADER getWavHeader() const;
-        float* getSampleData() const;   
+        double* getSampleData() const;   
         double getAudioDuration() const;
         uint32_t getDataChunkPos() const;
         int loadWavHeader(std::string);
         void loadSampleData(std::string);
         void writeSampleData(std::string);
+        double clamp(double, double, double);
 };
 
 #endif //FILE_H

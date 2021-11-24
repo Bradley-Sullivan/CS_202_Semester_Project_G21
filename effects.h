@@ -5,11 +5,11 @@
 #include "file.h"
 
 class Effects {
-    float* rawData;
+    double* rawData;
     WAV_HEADER wavHeader;
-    
+
     public:
-        Effects(float* rawData, WAV_HEADER header):rawData{rawData},wavHeader{header}{};
+        Effects(double* rawData, WAV_HEADER header):rawData{rawData},wavHeader{header}{};
         Effects() = default;
         void echo(double);
         void normalize();

@@ -1,7 +1,7 @@
 #include "effects.h"
 
 void Effects::echo(double audioDuration) {
-    float echoDelaySeconds, echoDecay = 0.5;
+    double echoDelaySeconds, echoDecay = 0.4;
     do {
         std::cout << "\nPlease enter echo delay in seconds.\n> ";
         std::cin >> echoDelaySeconds;
@@ -11,7 +11,9 @@ void Effects::echo(double audioDuration) {
     } while(echoDelaySeconds >= audioDuration);
     int delayOffset = echoDelaySeconds * wavHeader.samplesPerSecond;
     for (uint32_t i = 0; i < wavHeader.dataBodySize - delayOffset; i++) {
-        if (i + delayOffset < wavHeader.dataBodySize) rawData[i + delayOffset] += rawData[i] * echoDecay;
+        if (i + delayOffset < wavHeader.dataBodySize) {
+            rawData[i + delayOffset] += rawData[i] * echoDecay;
+        }
     }
 }
 
@@ -30,12 +32,12 @@ void Effects::normalize() {
 }
 
 void Effects::gainAdjustment() {
-    float gainFactor;
+    double gainFactor;
     do {
-        std::cout << "\nPlease enter your desired gain adjustment factor (i.e. a value betwen 0 & 10)" << std::endl;
+        std::cout << "\nPlease enter your desired gain adjustment factor (i.e. a value betwen 0 & 1)" << std::endl;
         std::cout << "> ";
         std::cin >> gainFactor;
-        if (gainFactor < 0 || gainFactor > 10) std::cout << "\nInvalid value entered. Try again" << std::endl;
-    } while(gainFactor < 0 || gainFactor > 10);
+        if (gainFactor < 0 || gainFactor > 1) std::cout << "\nInvalid value entered. Try again" << std::endl;
+    } while(gainFactor < 0 || gainFactor > 1);
     for (uint32_t i = 0; i < wavHeader.dataBodySize; i++) rawData[i] *= gainFactor;
 }
