@@ -4,14 +4,13 @@
  * @brief Header file for the WavFile class which handles the loading and saving of .wav file sample data.
  * @date 2021-11-10
  */
+
 #ifndef FILE_H
 #define FILE_H
 
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <math.h>
-#include <cstdint>
 
 typedef struct WAV_HEADER{
     //RIFF Chunk
@@ -38,14 +37,59 @@ class WavFile {
     uint32_t dataChunkPos;
     double* sampleData;
 
-    public:        
+    public:
+        /**
+         * @brief Get the Wav Header struct
+         * 
+         * @return WAV_HEADER 
+         */
         WAV_HEADER getWavHeader() const;
-        double* getSampleData() const;   
+
+        /**
+         * @brief Get the Sample Data array
+         * 
+         * @return double* 
+         */
+        double* getSampleData() const;  
+
+        /**
+         * @brief Get the Audio Duration
+         * 
+         * @return double 
+         */
         double getAudioDuration() const;
+
+        /**
+         * @brief Get the Data Chunk Position in the file
+         * 
+         * @return uint32_t 
+         */
         uint32_t getDataChunkPos() const;
+
+        /**
+         * @brief Loads the header/chunk info from the wav file
+         * 
+         * @return int 
+         */
         int loadWavHeader(std::string);
+
+        /**
+         * @brief Picks up where loadWavHeader() left off and reads in sample data into an array
+         * 
+         */
         void loadSampleData(std::string);
+
+        /**
+         * @brief Saves modified sample data to an output file
+         * 
+         */
         void writeSampleData(std::string);
+
+        /**
+         * @brief Clamps a value between two bounds
+         * 
+         * @return double 
+         */
         double clamp(double, double, double);
 };
 
